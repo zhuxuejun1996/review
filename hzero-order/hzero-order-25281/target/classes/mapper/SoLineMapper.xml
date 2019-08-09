@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.hzero.infra.mapper.SoLineMapper">
+	<!-- 可根据自己的需求，是否要使用 -->
+
+    <select id="querySoLineByHeadIdAndLineNumber" parameterType="java.util.Map" resultType="org.hzero.domain.entity.SoLine">
+         select * from hodr_so_line WHERE so_header_id = #{headId} AND line_number = #{lineNumber}
+    </select>
+
+
+    <!--复杂查询-->
+    <select id="multiQuery" resultType="org.hzero.api.dto.OrderRecodeDTO" >
+        SELECT
+        sh.order_number,
+        cp.company_name,
+        cs.customer_name,
+        sh.order_status,
+        floor(sl.order_quantity*sl.unit_selling_price) line_amount
+        FROM
+        hodr_so_header sh,
+        hodr_company cp,
+        hodr_customer cs,
+        hodr_so_line sl,
+        hodr_item it
+        where sh.so_header_id = sl.so_header_id
+        and sh.company_id = cp.company_id
+        and sh.customer_id = cs.customer_id
+        and it.item_id = sl.item_id
+
+        <if test="orderNumber != null and orderNumber != ''">
+            and  sh.order_number = #{orderNumber}
+        </if>
+        <if test="companyName!=null and companyName != ''" >
+            and  cp.company_name = #{companyName}
+        </if>
+        <if test="customerName!= null and customerName != ''" >
+            and cs.customer_name = #{customerName}
+        </if>
+        <if test="orderStatus!=null and orderStatus != '' " >
+            and sh.order_status = #{orderStatus}
+        </if>
+        <if test="itemCode!=null and itemCode != ''">
+            and it.item_code = #{itemCode}
+        </if>
+
+    </select>
+
+    <!--查询数据订单-->
+    <select id="queryOrderInfo" resultType="org.hzero.api.dto.OrderDto">
+        SELECT
+        sh.order_number,
+        cp.company_name,
+        cs.customer_name,
+        sh.order_date,
+        sh.order_status,
+        am.order_amount,
+        sl.line_number,
+        it.item_code,
+        it.item_description,
+        sl.order_quantity_uom,
+        sl.unit_selling_price,
+        (sl.unit_selling_price*sl.order_quantity) line_amount
+        from
+        hodr_company cp,
+        hodr_customer cs,
+        hodr_item it,
+        hodr_so_header sh,
+        hodr_so_line sl,
+        (select sl.so_header_id,sum(sl.unit_selling_price) order_amount from hodr_so_line sl,hodr_so_header sh
+        where sl.so_header_id = sh.so_header_id
+        group by sl.so_header_id) am
+        where sh.so_header_id = sl.so_header_id
+        and sh.company_id = cp.company_id
+        and sh.customer_id = cs.customer_id
+        and it.item_id = sl.item_id
+        and am.so_header_id = sh.so_header_id
+
+        <if test="orderNumber != null and orderNumber != '' ">
+            and sh.order_number = #{orderNumber}
+        </if>
+        <if test="companyName != null and companyName != '' ">
+            and cp.company_name like #{companyName}
+        </if>
+        <if test="customerName != null and customerName != ''">
+            and cs.customer_name like #{customerName}
+        </if>
+        <if test="orderDate != null and orderDate != '' ">
+            and sh.order_date = #{orderDate}
+        </if>
+        <if test="orderStatus != null and orderStatus != '' ">
+            and sh.order_status = #{orderStatus}
+        </if>
+        <if test="lineNumber != null and lineNumber != '' ">
+            and sl.line_number = #{lineNumber}
+        </if>
+        <if test="itemCode != null and itemCode != '' ">
+            and it.item_code = #{itemCode}
+        </if>
+        <if test="itemDescription != null and itemDescription != '' ">
+            and it.item_description like #{itemDescription}
+        </if>
+        <if test="orderquantityUom != null and orderquantityUom != '' ">
+            and sl.order_quantity_uom = #{orderquantityUom}
+        </if>
+        <if test="unitSellingPrice != null and unitSellingPrice != ''">
+            and sl.unit_selling_price = #{unitSellingPrice}
+        </if>
+
+    </select>
+
+    <!--查询详细-->
+    <select id="queryDetail" resultType="org.hzero.api.dto.OrderRecodeDTO">
+
+        SELECT
+        sh.order_number,
+        cp.company_name,
+        cs.customer_name,
+        sh.order_date,
+        sh.order_status,
+        am.order_amount,
+        sl.line_number,
+        it.item_code,
+        it.item_description,
+        sl.order_quantity_uom,
+        sl.unit_selling_price,
+        (sl.unit_selling_price*sl.order_quantity) line_amount
+        from
+        hodr_company cp,
+        hodr_customer cs,
+        hodr_item it,
+        hodr_so_header sh,
+        hodr_so_line sl,
+        (select sl.so_header_id,sum(sl.unit_selling_price) order_amount from hodr_so_line sl,hodr_so_header sh
+        where sl.so_header_id = sh.so_header_id
+        group by sl.so_header_id) am
+        where sh.so_header_id = sl.so_header_id
+        and sh.company_id = cp.company_id
+        and sh.customer_id = cs.customer_id
+        and it.item_id = sl.item_id
+        and am.so_header_id = sh.so_header_id
+
+        <if test="orderNumber != null and orderNumber != '' ">
+            and sh.order_number = #{orderNumber}
+        </if>
+    </select>
+
+    <!--导出数据-->
+    <select id="exportData" resultType="org.hzero.api.dto.OrderRecodeDTO">
+        SELECT
+        sh.order_number,
+        cp.company_name,
+        cs.customer_name,
+        sh.order_date,
+        sh.order_status,
+        am.order_amount,
+        sl.line_number,
+        it.item_code,
+        it.item_description,
+        sl.order_quantity_uom,
+        sl.unit_selling_price,
+        (sl.unit_selling_price*sl.order_quantity) line_amount
+        from
+        hodr_company cp,
+        hodr_customer cs,
+        hodr_item it,
+        hodr_so_header sh,
+        hodr_so_line sl,
+        (select sl.so_header_id,sum(sl.unit_selling_price*sl.order_quantity) order_amount from hodr_so_line sl,hodr_so_header sh
+        where sl.so_header_id = sh.so_header_id
+        group by sl.so_header_id) am
+        where sh.so_header_id = sl.so_header_id
+        and sh.company_id = cp.company_id
+        and sh.customer_id = cs.customer_id
+        and it.item_id = sl.item_id
+        and am.so_header_id = sh.so_header_id
+
+
+        <if test="orderNumber != null and orderNumber != '' ">
+            and sh.order_number = #{orderNumber}
+        </if>
+        <if test="companyName != null and companyName != '' ">
+            and cp.company_name like #{companyName}
+        </if>
+        <if test="customerName != null and customerName != ''">
+            and cs.customer_name like #{customerName}
+        </if>
+        <if test="orderDate != null and orderDate != '' ">
+            and sh.order_date = #{orderDate}
+        </if>
+        <if test="orderStatus != null and orderStatus != '' ">
+            and sh.order_status = #{orderStatus}
+        </if>
+        <if test="lineNumber != null and lineNumber != '' ">
+            and sl.line_number = #{lineNumber}
+        </if>
+        <if test="itemCode != null and itemCode != '' ">
+            and it.item_code = #{itemCode}
+        </if>
+        <if test="itemDescription != null and itemDescription != '' ">
+            and it.item_description like #{itemDescription}
+        </if>
+        <if test="orderquantityUom != null and orderquantityUom != '' ">
+            and sl.order_quantity_uom = #{orderquantityUom}
+        </if>
+        <if test="unitSellingPrice != null and unitSellingPrice != ''">
+            and sl.unit_selling_price = #{unitSellingPrice}
+        </if>
+    </select>
+
+
+    <!--视图测试-->
+    <select id="testQuery" resultType="org.hzero.api.dto.OrderDto">
+        select * from order_info;
+    </select>
+
+
+    <!--<insert id="creatOrderInfo" parameterType="org.hzero.api.dto.OrderDto">&ndash;&gt;-->
+    <!--insert  into  order_info values (-->
+    <!--<if test="orderNumber != null and orderNunber != '' ">-->
+    <!--order_number = #{orderNumber}-->
+    <!--</if>-->
+
+
+    <!--)-->
+
+    <!--</insert>-->
+
+    <!--编辑订单-->
+    <update id="updateOrder">
+        UPDATE
+        hodr_so_header,hodr_so_line
+        SET hodr_so_header.company_id = #{companyId},
+            hodr_so_header.customer_id = #{customerId},
+            hodr_so_header.order_date = #{orderDate},
+		    hodr_so_line.item_id = #{itemId},
+		    hodr_so_line.order_quantity = #{orderQuantity},
+		    hodr_so_line.unit_selling_price = #{unitSellingPrice}
+        WHERE
+        hodr_so_header.so_header_id = hodr_so_line.so_header_id
+        AND hodr_so_header.order_number = #{orderNumber}
+        AND hodr_so_line.line_number = #{lineNumber}
+    </update>
+
+</mapper>
